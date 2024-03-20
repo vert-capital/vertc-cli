@@ -28,6 +28,12 @@ async function main() {
       type: 'string',
       demandOption: false, // Torna o argumento obrigatório
     })
+    .option('project_name', {
+      alias: 'n',
+      describe: 'Escolha o nome do projeto',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
     .option('generate', {
       alias: 'g',
       describe: 'Escolha uma estrutura',
