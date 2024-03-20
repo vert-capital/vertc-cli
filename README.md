@@ -8,6 +8,18 @@ Criação de um novo projeto:
 <code>npx vert-cli@latest --template remix</code>
 </pre>
 
+Gerador de código:
+
+<pre>
+<code>npx vert-cli@latest --generate remix-crud</code>
+</pre>
+
+OU
+
+<pre>
+<code>npx vert-cli@latest --generate-list</code>
+</pre>
+
 <h2>💻 Templates</h2>
 
 Templates disponíveis:
