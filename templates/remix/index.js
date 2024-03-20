@@ -9,7 +9,7 @@ async function main() {
   const args = processArgs(process.argv);
   const template = args.template || args.t || '';
   let folderName = args.repository_name || args.r || '';
-  let projectName = args.project_name || '';
+  let projectName = args.project_name || args.n || '';
   let directory = args.directory || args.d || '';
 
   const urlGit = 'https://github.com/vert-capital/vertc-template-remix.git';
