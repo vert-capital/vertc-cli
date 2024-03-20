@@ -1,10 +1,11 @@
 {
   "name": "vert-cli",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "options": "node index.js --options",
     "dev": "node index.js --template remix",
     "dev-full": "node index.js --template remix --repository_name vertc-novo --project_name 'VERTC Novo' -d ./vertc-novo"
   },

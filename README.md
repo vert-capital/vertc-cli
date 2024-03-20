@@ -14,10 +14,10 @@ Gerador de código:
 <code>npx vert-cli@latest --generate remix-crud</code>
 </pre>
 
-OU
+OU para listar todas opções disponíveis:
 
 <pre>
-<code>npx vert-cli@latest --generate-list</code>
+<code>npx vert-cli@latest --options</code>
 </pre>
 
 <h2>💻 Templates</h2>
