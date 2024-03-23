@@ -1,154 +1,112 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
-import path from 'path';
 import fs from 'fs';
 import chalk from 'chalk';
 import {
     processArgs,
-    templateVars
+    templateVars,
+    cloneTemplate,
+    removeTemplateFolder
 } from '../../utils.js';
 
-async function main() {
-    const args = processArgs(process.argv);
-    const template = args.template;
-    let kube_environment = args.kube_environment;
-    let kube_projectname = args.kube_projectname;
-    let kube_backendendpoint = args.kube_backendendpoint;
-    let kube_frontendendpoint = args.kube_frontendendpoint;
-    let kube_projecttype = args.kube_projecttype;
+const GIT_URL = 'https://github.com/vert-capital/template-kubernetes.git';
+const ERROR_GIT_NOT_FOUND = `${chalk.red('[vert-cli]:')} Este script requer o Git instalado`;
 
-    const templateVarsData = {
-        '{{ENVIRONMENT}}': kube_environment,
-        '{{PROJECT_NAME}}': kube_projectname,
-        '{{BACKEND_ENDPOINT}}': kube_backendendpoint,
-        '{{FRONTEND_ENDPOINT}}': kube_frontendendpoint,
+async function askForMissingArguments(args) {
+    if (!args.kube_environment) {
+        args.kube_environment = await askQuestion('list', 'kube_environment', 'Escolha o ambiente', ['prd', 'stg', 'hml']);
     }
-
-    const urlGit = 'https://github.com/vert-capital/template-kubernetes.git';
-
-    if (!kube_environment) {
-        const answers = await inquirer.prompt([{
-            type: 'list',
-            name: 'kube_environment',
-            message: 'Escolha o ambiente',
-            choices: ['prd', 'stg', 'hml'],
-        }, ]);
-
-        const results = answers;
-        kube_environment = results.kube_environment;
+    if (!args.kube_projectname) {
+        args.kube_projectname = await askQuestion('input', 'kube_projectname', 'Nome do projeto');
     }
-
-    if (!kube_projectname) {
-        const answers = await inquirer.prompt([{
-            type: 'input',
-            name: 'kube_projectname',
-            message: 'Nome do projeto',
-        }, ]);
-
-        const results = answers;
-        kube_projectname = results.kube_projectname;
+    if (!args.kube_projecttype) {
+        args.kube_projecttype = await askQuestion('list', 'kube_projecttype', 'Escolha o tipo do projeto', ['remix', 'golang', 'django']);
     }
+    await askForEndpointIfNeeded(args);
+}
 
-    if (!kube_projecttype) {
-        const answers = await inquirer.prompt([{
-            type: 'list',
-            name: 'kube_projecttype',
-            message: 'Escolha o tipo do projeto',
-            choices: ['remix', 'golang', 'django'],
-        }, ]);
+async function askQuestion(type, name, message, choices = []) {
+    const answers = await inquirer.prompt([{
+        type,
+        name,
+        message,
+        choices
+    }]);
+    return answers[name];
+}
 
-        const results = answers;
-        kube_projecttype = results.kube_projecttype;
+// Função assíncrona para perguntar pelo endpoint, se necessário
+async function askForEndpointIfNeeded(args) {
+    // Verifica se o endpoint do backend não foi fornecido e se o tipo de projeto é 'golang' ou 'django'
+    if (!args.kube_backendendpoint && ['golang', 'django'].includes(args.kube_projecttype)) {
+        // Pergunta pelo endpoint do backend
+        args.kube_backendendpoint = await askQuestion('input', 'kube_backendendpoint', 'Endpoint do backend');
     }
-
-    if (!kube_backendendpoint && (kube_projecttype === 'golang' || kube_projecttype === 'django')) {
-        const answers = await inquirer.prompt([{
-            type: 'input',
-            name: 'kube_backendendpoint',
-            message: 'Endpoint do backend',
-        }, ]);
-
-        const results = answers;
-        kube_backendendpoint = results.kube_backendendpoint;
+    // Verifica se o endpoint do frontend não foi fornecido e se o tipo de projeto é 'remix'
+    if (!args.kube_frontendendpoint && args.kube_projecttype === 'remix') {
+        // Pergunta pelo endpoint do frontend
+        args.kube_frontendendpoint = await askQuestion('input', 'kube_frontendendpoint', 'Endpoint do frontend');
     }
+}
 
-    if (!kube_frontendendpoint && kube_projecttype === 'remix') {
-        const answers = await inquirer.prompt([{
-            type: 'input',
-            name: 'kube_frontendendpoint',
-            message: 'Endpoint do frontend',
-        }, ]);
-
-        const results = answers;
-        kube_frontendendpoint = results.kube_frontendendpoint;
-    }
-
+// Função para verificar os pré-requisitos
+function checkPrerequisites() {
+    // Verifica se o Git está instalado
     if (!shell.which('git')) {
-        console.error(
-            `${chalk.red('[vert-cli]:')} Este script requer o Git instalado`
-        );
+        console.error(ERROR_GIT_NOT_FOUND);
         process.exit(1);
     }
+}
 
-    console.log(
-        `${chalk.hex('#4ca9c4').bold(`[${template}]:`)} Criando projeto...`
-    );
+// Função para configurar o projeto
+function setupProject(template, args, fullPath) {
+    console.log(`${chalk.hex('#4ca9c4').bold(`[${template}]:`)} Criando projeto...`);
+    const mainFolderName = args.kube_projectname + '-' + args.kube_environment;
+    execute(mainFolderName, fullPath, args);
+    console.log(`${chalk.hex('#67d770').bold(`[${template}]:`)} Projeto "${mainFolderName}" criado com sucesso.`);
+}
 
-    // caminho pasta temporaria do sistema operacional para clonar o template
-    // get temp path from OS
-    const tempPath = shell.tempdir();
-
-    // Nome da pasta do projeto
-    const fullPath = path.join(tempPath, kube_projectname);
-
-    // se pasta não existe cria
-    if (!fs.existsSync(fullPath)) {
-        fs.mkdirSync(fullPath);
+function execute(mainFolderName, fullPath, args) {
+    const templateVarsData = {
+        '{{ENVIRONMENT}}': args.kube_environment,
+        '{{PROJECT_NAME}}': args.kube_projectname,
+        '{{BACKEND_ENDPOINT}}': args.kube_backendendpoint,
+        '{{FRONTEND_ENDPOINT}}': args.kube_frontendendpoint,
     }
 
-    shell.exec(`git clone ${urlGit} ${fullPath}`);
-
-    // Após clonar, remove a pasta .git do template clonado
-    shell.rm('-rf', `${fullPath}/.git`);
-
-    let mainFolderName = kube_projectname + '-' + kube_environment;
-
-    // verifica se existe a pasta mainFolderName
+    // Verifica e cria a pasta do projeto principal se não existir
     if (!fs.existsSync(mainFolderName)) {
         fs.mkdirSync(mainFolderName);
     }
 
-    if (kube_projecttype === 'remix') {
-        shell.cp('-R', `${fullPath}/remix-frontend/*`, mainFolderName);
-
-        if (kube_frontendendpoint === '') {
-            // deleta o arquivo new_inress.yaml
-            shell.rm('-rf', `${mainFolderName}/remix-frontend/new_inress.yaml`);
-        }
-    } else if (kube_projecttype === 'golang') {
-        shell.cp('-R', `${fullPath}/golang-backend/*`, mainFolderName);
-
-        if (kube_backendendpoint === '') {
-            // deleta o arquivo new_inress.yaml
-            shell.rm('-rf', `${mainFolderName}/golang-backend/new_inress.yaml`);
-        }
-    } else if (kube_projecttype === 'django') {
-        shell.cp('-R', `${fullPath}/django-backend/*`, mainFolderName);
-
-        if (kube_backendendpoint === '') {
-            // deleta o arquivo new_inress.yaml
-            shell.rm('-rf', `${mainFolderName}/django-backend/new_inress.yaml`);
-        }
+    // Copia os arquivos específicos baseados no tipo de projeto
+    switch (args.kube_projecttype) {
+        case 'remix':
+            copyAndPrepare('remix-frontend', mainFolderName, fullPath, args.kube_frontendendpoint);
+            break;
+        case 'golang':
+            copyAndPrepare('golang-backend', mainFolderName, fullPath, args.kube_backendendpoint);
+            break;
+        case 'django':
+            copyAndPrepare('django-backend', mainFolderName, fullPath, args.kube_backendendpoint);
+            break;
+        default:
+            console.error(`${chalk.red('Tipo de projeto não suportado:')} ${args.kube_projecttype}`);
+            process.exit(1);
     }
 
     // renomeia o arquivo no diretorio argocd/apps/apps/sample.yaml para o nome do projeto
-    let newName = kube_projectname + '-' + kube_environment;
-    shell.cp('-R', `${fullPath}/argocd/apps/apps/prd.yaml`, "argocd/apps/apps/");
+    let newName = args.kube_projectname + '-' + args.kube_environment;
 
-    if (kube_environment === 'prd') {
-        shell.mv(`argocd/apps/apps/prd.yaml`, `argocd/apps/apps/${newName}.yaml`);
+    // Move o arquivo YAML de configuração para o novo nome
+    if (args.kube_environment === 'prd') {
+        shell.mv(`${fullPath}/argocd/apps/apps/prd.yaml`, `argocd/apps/apps/${newName}.yaml`);
+        // remove hml.yaml
+        shell.rm(`argocd/apps/apps/hml.yaml`);
     } else {
-        shell.mv(`argocd/apps/apps/hml.yaml`, `argocd/apps/apps/${newName}.yaml`);
+        shell.mv(`${fullPath}/argocd/apps/apps/hml.yaml`, `argocd/apps/apps/${newName}.yaml`);
+        // remove prd.yaml
+        shell.rm(`argocd/apps/apps/prd.yaml`);
     }
 
     // busca todos os arquivos e altera as variaveis dentro do arquivo com as variaveis passadas
@@ -159,18 +117,44 @@ async function main() {
         }
     });
 
+    // Aplica as variáveis de template no arquivo YAML de configuração
     templateVars(`argocd/apps/apps/${newName}.yaml`, templateVarsData);
 
 
     // adiciona na ultima linha do arquivo argocd/gera_todos.sh o conteudo abaixo
     let content = `sh gera_todos.sh "${newName}" "${newName}/"`
     fs.appendFileSync(`argocd/gera_todos.sh`, content);
+}
 
-    console.log(
-        `${chalk
-      .hex('#67d770')
-      .bold(`[${template}]:`)} Projeto "${mainFolderName}" criado com sucesso.`
-    );
+function copyAndPrepare(projectTypeDirectory, mainFolderName, fullPath, endpoint) {
+    const sourcePath = `${fullPath}/${projectTypeDirectory}/*`;
+    shell.cp('-R', sourcePath, mainFolderName);
+
+    // Se o endpoint não for fornecido, remove o arquivo de ingresso correspondente
+    if (!endpoint || endpoint === '') {
+        if (projectTypeDirectory === 'remix-frontend') {
+            shell.rm('-rf', `${mainFolderName}/frontend/new_ingress.yaml`);
+        } else {
+            shell.rm('-rf', `${mainFolderName}/backend/new_ingress.yaml`);
+        }
+    }
+}
+
+// Função principal assíncrona
+async function main() {
+    // Processa os argumentos da linha de comando
+    const args = processArgs(process.argv);
+    // Verifica os pré-requisitos
+    checkPrerequisites();
+    // Pergunta pelos argumentos faltantes
+    await askForMissingArguments(args);
+    // Clona o template do projeto
+    const fullPath = cloneTemplate(GIT_URL, args.kube_projectname);
+    // Configura o projeto
+    setupProject(args.template, args, fullPath);
+
+    // remove pasta do template
+    removeTemplateFolder(fullPath);
 }
 
 main();
