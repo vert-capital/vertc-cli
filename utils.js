@@ -1,5 +1,8 @@
-import { spawn } from 'child_process';
+import {
+  spawn
+} from 'child_process';
 import chalk from 'chalk';
+import shell from 'shelljs';
 
 export const colors = {
   progress: '#4ca9c4',
@@ -24,7 +27,10 @@ export function cloneRepository(repositoryUrl, directory, template) {
     const command = `git clone ${repositoryUrl} ${directory}`;
 
     // Execute o comando de clone
-    const process = spawn(command, { shell: true, stdio: 'inherit' });
+    const process = spawn(command, {
+      shell: true,
+      stdio: 'inherit'
+    });
 
     process.on('close', (code) => {
       if (code === 0) {
@@ -43,5 +49,15 @@ export function cloneRepository(repositoryUrl, directory, template) {
         reject();
       }
     });
+  });
+}
+
+export function templateVar(filePath, key, value) {
+  shell.sed('-i', key, value, filePath);
+}
+
+export function templateVars(filePath, keyValueList) {
+  Object.entries(keyValueList).forEach(([key, value]) => {
+    templateVar(filePath, key, value);
   });
 }

@@ -1,17 +1,28 @@
 #!/usr/bin/env node
 
 import yargs from 'yargs';
-import { hideBin } from 'yargs/helpers';
-import { spawn } from 'child_process';
+import {
+  hideBin
+} from 'yargs/helpers';
+import {
+  spawn
+} from 'child_process';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import {
+  fileURLToPath
+} from 'url';
+import {
+  dirname
+} from 'path';
 import chalk from 'chalk';
-import { colors } from './utils.js';
+import {
+  colors
+} from './utils.js';
 
 // Replicando __dirname e __filename em ESM
-const __filename = fileURLToPath(import.meta.url);
+const __filename = fileURLToPath(
+  import.meta.url);
 const __dirname = dirname(__filename);
 
 async function main() {
@@ -51,7 +62,38 @@ async function main() {
       describe: 'Veja todas as opções disponíveis',
       type: 'string',
       demandOption: false, // Torna o argumento obrigatório
-    }).argv;
+    })
+    .options("kube_environment", {
+      alias: 'ke',
+      describe: 'Escolha o ambiente, precisa ser: "prd", "stg", hml"',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
+    .options("kube_projectname", {
+      alias: 'kpn',
+      describe: 'Escolha o nome do projeto',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
+    .options("kube_backendendpoint", {
+      alias: 'kbe',
+      describe: 'Escolha o endpoint do backend',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
+    .options("kube_frontendendpoint", {
+      alias: 'kfe',
+      describe: 'Escolha o endpoint do frontend',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
+    .options("kube_projecttype", {
+      alias: 'kpt',
+      describe: 'Escolha o tipo do projeto, (remix, golang, django)',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
+    .argv;
 
   if (argv.options === '') {
     console.log(
