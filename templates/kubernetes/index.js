@@ -98,6 +98,9 @@ function execute(mainFolderName, fullPath, args) {
     // renomeia o arquivo no diretorio argocd/apps/apps/sample.yaml para o nome do projeto
     let newName = args.kube_projectname + '-' + args.kube_environment;
 
+    // copia o namespace da pasta base para a pasta do projeto
+    shell.cp(`${fullPath}/base/namespace.yaml`, `${mainFolderName}/namespace.yaml`);
+
     // Move o arquivo YAML de configuração para o novo nome
     if (args.kube_environment === 'prd') {
         shell.mv(`${fullPath}/argocd/apps/apps/prd.yaml`, `argocd/apps/apps/${newName}.yaml`);
