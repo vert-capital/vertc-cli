@@ -86,9 +86,22 @@ function execute(mainFolderName, fullPath, args) {
         `${mainFolderName}/usecase/${entityLowerCase}/usecase_${entityLowerCase}_service.go`,
         templateVarsData);
 
+    const imports = `	usecase_carros "app/usecase/carros"`
+
     const migrateAdd = `	db.AutoMigrate(&entity.Entity${entityUpCase}{})`
+    const apiHandlerVarsAdd = `
+
+	var usecase${entityUpCase} usecase_${entityLowerCase}.IUsecase${entityUpCase} = usecase_${entityLowerCase}.NewService(
+		repository.New${entityUpCase}Postgres(conn),
+	)
+`
+
+    const apiHandlerAdd = `	handlers.Mount${entityUpCase}Routes(r, conn, usecase${entityUpCase})`
 
     insertText("./src/infrastructure/postgres/postgres.go", migrateAdd, null, "db.AutoMigrate(&entity.EntityUser{})");
+    insertText("./src/api/api.go", apiHandlerVarsAdd, null, "r.Use(gin.Recovery())");
+    insertText("./src/api/api.go", apiHandlerAdd, null, "handlers.MountUsersHandlers(r, conn)");
+    insertText("./src/api/api.go", imports, null, "\"app/api/handlers\"");
 
 }
 
