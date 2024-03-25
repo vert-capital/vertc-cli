@@ -93,6 +93,12 @@ async function main() {
       type: 'string',
       demandOption: false, // Torna o argumento obrigatório
     })
+    .options("entity", {
+      alias: 'ent',
+      describe: 'Nome da entitidade',
+      type: 'string',
+      demandOption: false, // Torna o argumento obrigatório
+    })
     .argv;
 
   if (argv.options === '') {

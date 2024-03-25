@@ -55,7 +55,16 @@ export function cloneRepository(repositoryUrl, directory, template) {
 }
 
 export function templateVar(filePath, key, value) {
-  shell.sed('-i', key, value, filePath);
+
+  // console.log(`Substituindo variável ${key} por ${value} em ${filePath}`);
+
+  // Colocar desta maneira porque da forma antiga estava tendo brechas
+  // Alguns ele não conseguia alterar. Dessa maneira alteração é 100% efetiva
+  const content = fs.readFileSync(filePath, 'utf8');
+  const result = content.replace(new RegExp(`${key}`, 'g'), value);
+  fs.writeFileSync(filePath, result, 'utf8');
+
+  // shell.sed('-i', key, value, filePath);
 }
 
 export function templateVars(filePath, keyValueList) {
@@ -85,4 +94,29 @@ export function cloneTemplate(gitUrl, destinationFolder) {
 export function removeTemplateFolder(fullPath) {
   // Remove o diretório do template após a clonagem
   shell.rm('-rf', fullPath);
+}
+
+export function copy(source, destination, templateVarsParams) {
+  shell.cp(source, destination);
+
+  if (templateVarsParams) {
+    templateVars(destination, templateVarsParams);
+  }
+}
+
+export function insertText(filePath, newText, lineNumber = null, referenceText = null) {
+  const content = fs.readFileSync(filePath, 'utf8');
+  let lines = content.split('\n');
+
+  if (lineNumber !== null) {
+    lines.splice(lineNumber, 0, newText);
+  } else if (referenceText !== null) {
+    const index = lines.findIndex(line => line.includes(referenceText));
+    if (index !== -1) {
+      lines.splice(index + 1, 0, newText);
+    }
+  }
+
+  const newContent = lines.join('\n');
+  fs.writeFileSync(filePath, newContent, 'utf8');
 }
