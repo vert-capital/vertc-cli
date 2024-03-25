@@ -105,20 +105,6 @@ function execute(mainFolderName, fullPath, args) {
 
 }
 
-function copyAndPrepare(projectTypeDirectory, mainFolderName, fullPath, endpoint) {
-    const sourcePath = `${fullPath}/${projectTypeDirectory}/*`;
-    shell.cp('-R', sourcePath, mainFolderName);
-
-    // Se o endpoint não for fornecido, remove o arquivo de ingresso correspondente
-    if (!endpoint || endpoint === '') {
-        if (projectTypeDirectory === 'remix-frontend') {
-            shell.rm('-rf', `${mainFolderName}/frontend/new_ingress.yaml`);
-        } else {
-            shell.rm('-rf', `${mainFolderName}/backend/new_ingress.yaml`);
-        }
-    }
-}
-
 // Função principal assíncrona
 async function main() {
     // Processa os argumentos da linha de comando
