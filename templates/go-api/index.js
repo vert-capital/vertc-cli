@@ -1,65 +1,73 @@
 import inquirer from 'inquirer';
 import shell from 'shelljs';
-import path from 'path';
 import fs from 'fs';
 import chalk from 'chalk';
-import { processArgs } from '../../utils.js';
+import {
+  processArgs,
+  cloneTemplate,
+  copy,
+  insertText,
+  removeTemplateFolder
+} from '../../utils.js';
 
-async function main() {
-  const args = processArgs(process.argv);
-  const template = args.template;
-  let folderName = args.repository_name;
+const GIT_URL = 'https://github.com/akaytatsu/template_golang.git';
+const ERROR_GIT_NOT_FOUND = `${chalk.red('[vert-cli]:')} Este script requer o Git instalado`;
 
-  const urlGit = 'https://github.com/vert-capital/vertc-template-go.git';
+async function askForMissingArguments(args) {
+  // if (!args.projectName) {
+  //   args.projectName = await askQuestion('input', 'projectName', 'Qual será o nome do repositório?');
+  // }
+}
 
-  if (!folderName || !projectName) {
-    const answers = await inquirer.prompt([
-      {
-        type: 'input',
-        name: 'folderName',
-        message: 'Qual será o nome do repositório?',
-      },
-    ]);
+async function askQuestion(type, name, message, choices = []) {
+  const answers = await inquirer.prompt([{
+    type,
+    name,
+    message,
+    choices
+  }]);
+  return answers[name];
+}
 
-    const results = answers;
-    folderName = results.folderName;
-    projectName = results.projectName;
-  }
-
+// Função para verificar os pré-requisitos
+function checkPrerequisites() {
+  // Verifica se o Git está instalado
   if (!shell.which('git')) {
-    console.error(
-      `${chalk.red('[vert-cli]:')} Este script requer o Git instalado`
-    );
+    console.error(ERROR_GIT_NOT_FOUND);
     process.exit(1);
   }
+}
 
-  console.log(
-    `${chalk.hex('#4ca9c4').bold(`[${template}]:`)} Criando projeto...`
-  );
+// Função para configurar o projeto
+function setupProject(template, args, fullPath) {
+  console.log(`${chalk.hex('#4ca9c4').bold(`[${template}]:`)} Criando projeto...`);
+  const mainFolderName = "./";
+  execute(mainFolderName, fullPath, args);
+  console.log(`${chalk.hex('#67d770').bold(`[${template}]:`)} Projeto "${mainFolderName}" criado com sucesso.`);
+}
 
-  shell.exec(`git clone ${urlGit} ${folderName}`);
+function execute(mainFolderName, fullPath, args) {
+  shell.exec(`rm -rf ${fullPath}/.git/`);
+  shell.exec(`cp -r ${fullPath}/* ${mainFolderName}`);
+  shell.exec(`cp -r ${fullPath}/.gitignore ${mainFolderName}.gitignore`);
+  shell.exec(`cp ${fullPath}/src/.env.sample ${mainFolderName}src/.env`);
+}
 
-  // Após clonar, remove a pasta .git do template clonado
-  shell.rm('-rf', `${folderName}/.git`);
+// Função principal assíncrona
+async function main() {
+  // Processa os argumentos da linha de comando
+  const args = processArgs(process.argv);
+  // Verifica os pré-requisitos
+  checkPrerequisites();
+  // Pergunta pelos argumentos faltantes
+  // await askForMissingArguments(args);
+  // Clona o template do projeto
+  const fullPath = cloneTemplate(GIT_URL, "golang-template");
+  // Configura o projeto
+  setupProject(args.template, args, fullPath);
 
-  // Caminho para o arquivo .env no novo projeto
-  const envPath = path.join(process.cwd(), folderName, '.env');
-
-  // Conteúdo para o arquivo .env
-  const envContent = `SECRET_key=
-AUTH_URL=
-REDIRECT_FRONT=`;
-
-  fs.writeFileSync(envPath, envContent);
-
-  // Substitui placeholders no template clonado
-  shell.sed('-i', '{{FOLDER_NAME}}', folderName, `${folderName}/package.json`);
-
-  console.log(
-    `${chalk
-      .hex('#67d770')
-      .bold(`[${template}]:`)} Projeto "${folderName}" criado com sucesso.`
-  );
+  // remove pasta do template
+  removeTemplateFolder(fullPath);
 }
 
 main();
