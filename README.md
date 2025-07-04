@@ -45,40 +45,38 @@ npx github:vert-capital/vertc-cli --generate remix-crud
 ### Usando o pacote NPM
 
 Criação de um novo projeto:
-<pre>
-<code>npx vert-cli@latest --template remix</code>
-</pre>
+```bash
+npx vert-cli@latest --template remix
+```
 
 Gerador de código:
-
-<pre>
-<code>npx vert-cli@latest --generate remix-crud</code>
-</pre>
+```bash
+npx vert-cli@latest --generate remix-crud
+```
 
 OU para listar todas opções disponíveis:
-
-<pre>
-<code>npx vert-cli@latest --options</code>
-</pre>
+```bash
+npx vert-cli@latest --options
+```
 
 ### Usando diretamente do repositório GitHub
 
 Você também pode usar a CLI diretamente do repositório remoto:
 
 Criação de um novo projeto:
-<pre>
-<code>npx github:vert-capital/vertc-cli --template remix</code>
-</pre>
+```bash
+npx github:vert-capital/vertc-cli --template remix
+```
 
 Gerador de código:
-<pre>
-<code>npx github:vert-capital/vertc-cli --generate remix-crud</code>
-</pre>
+```bash
+npx github:vert-capital/vertc-cli --generate remix-crud
+```
 
 Para listar todas opções disponíveis:
-<pre>
-<code>npx github:vert-capital/vertc-cli --options</code>
-</pre>
+```bash
+npx github:vert-capital/vertc-cli --options
+```
 
 ## 💻 Templates Disponíveis
 
